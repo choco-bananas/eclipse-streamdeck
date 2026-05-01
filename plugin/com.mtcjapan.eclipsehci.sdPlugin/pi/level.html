@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Level Settings</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; font-size: 13px; background: #1c1c1c; color: #d4d4d4; padding: 12px; }
+  .section { margin-bottom: 14px; }
+  label { display: block; margin-bottom: 4px; color: #aaa; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  input, select { width: 100%; padding: 6px 8px; background: #2d2d2d; border: 1px solid #444; border-radius: 4px; color: #fff; font-size: 13px; }
+  input:focus { outline: none; border-color: #0078d4; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row label { margin: 0; white-space: nowrap; min-width: 80px; }
+  .hint { font-size: 11px; color: #666; margin-top: 3px; }
+  .sep { border: none; border-top: 1px solid #333; margin: 12px 0; }
+  .global-section { background: #252525; border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 16px; }
+  .global-section h3 { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 0.05em; }
+  .status { font-size: 11px; padding: 4px 8px; border-radius: 3px; display: inline-block; margin-top: 4px; }
+  .status.connected    { background: #1a3a1a; color: #4caf50; }
+  .status.connecting   { background: #3a3a1a; color: #ff9800; }
+  .status.disconnected { background: #3a1a1a; color: #f44336; }
+  .range-row { display: flex; gap: 8px; }
+  .range-row input { width: 70px; flex: none; }
+  .range-row span { align-self: center; color: #666; }
+  .dial-hint { background: #252525; border: 1px solid #333; border-radius: 6px; padding: 8px 10px; margin-top: 8px; }
+  .dial-hint p { font-size: 11px; color: #888; margin-bottom: 3px; }
+  .dial-hint strong { color: #aaa; }
+</style>
+</head>
+<body>
+<div class="global-section">
+  <h3>Eclipse 接続設定</h3>
+  <div class="row" style="margin-bottom:6px;">
+    <label>IP アドレス</label>
+    <input type="text" id="eclipseHost" placeholder="192.168.1.10">
+  </div>
+  <div class="row">
+    <label>ポート</label>
+    <input type="number" id="eclipsePort" placeholder="52001" min="52001" max="52020" style="width:90px;flex:none;">
+    <span class="hint">(52001-52020)</span>
+  </div>
+  <div id="hciStatus" class="status disconnected">● 未接続</div>
+</div>
+
+<div class="section">
+  <label>ソースポート (From)</label>
+  <input type="number" id="srcPort" min="1" max="496" placeholder="1">
+</div>
+
+<div class="section">
+  <label>デスティネーションポート (To)</label>
+  <input type="number" id="dstPort" min="1" max="496" placeholder="2">
+</div>
+
+<div class="section">
+  <label>ボタンラベル</label>
+  <input type="text" id="label" placeholder="例: BGM Level (空欄で自動)">
+</div>
+
+<hr class="sep">
+
+<div class="section">
+  <label>エンコーダー 1 ティック = ? dB</label>
+  <div class="row">
+    <input type="number" id="stepDb" min="1" max="18" value="1" style="width:70px;flex:none;">
+    <span class="hint">dB／クリック（デフォルト: 1）</span>
+  </div>
+</div>
+
+<div class="section">
+  <label>レベル範囲</label>
+  <div class="range-row">
+    <input type="number" id="minDb" value="-72" min="-72" max="0">
+    <span>dB ～</span>
+    <input type="number" id="maxDb" value="18" min="0" max="18">
+    <span>dB</span>
+  </div>
+</div>
+
+<div class="dial-hint">
+  <p><strong>🔄 回転</strong>：レベル調整（左=-dB / 右=+dB）</p>
+  <p><strong>⬇ 押す</strong>：0 dB にリセット</p>
+  <p><strong>👆 タッチ</strong>：ミュート(-72dB) / 解除 切替</p>
+</div>
+
+<hr class="sep">
+<p class="hint">* ポート番号は EHX 表示と同じ 1 始まりで入力。<br>
+レベル値は Appendix A ゲインテーブルに自動スナップされます。</p>
+
+<script>
+let settings = {};
+let globalSettings = {};
+
+document.addEventListener("DOMContentLoaded", () => {
+  ["srcPort","dstPort","label","stepDb","minDb","maxDb","eclipseHost","eclipsePort"]
+    .forEach(id => document.getElementById(id).addEventListener("change", save));
+});
+
+function onmessage(jsn) {
+  const { event, payload } = jsn;
+  if (event === "didReceiveSettings") {
+    settings = payload.settings || {};
+    loadSettings();
+  } else if (event === "didReceiveGlobalSettings") {
+    globalSettings = payload.settings || {};
+    loadGlobal();
+  } else if (event === "sendToPropertyInspector") {
+    if (payload.type === "state") updateStatus(payload.state);
+  }
+}
+
+function loadSettings() {
+  setVal("srcPort", settings.srcPort);
+  setVal("dstPort", settings.dstPort);
+  setVal("label",   settings.label, "");
+  setVal("stepDb",  settings.stepDb, 1);
+  setVal("minDb",   settings.minDb, -72);
+  setVal("maxDb",   settings.maxDb, 18);
+}
+
+function loadGlobal() {
+  setVal("eclipseHost", globalSettings.eclipseHost, "192.168.1.10");
+  setVal("eclipsePort", globalSettings.eclipsePort, 52001);
+}
+
+function setVal(id, val, def) {
+  const el = document.getElementById(id);
+  if (val !== undefined && val !== null) el.value = val;
+  else if (def !== undefined) el.value = def;
+}
+
+function save() {
+  settings.srcPort = parseInt(document.getElementById("srcPort").value) || 1;
+  settings.dstPort = parseInt(document.getElementById("dstPort").value) || 2;
+  settings.label   = document.getElementById("label").value;
+  settings.stepDb  = parseInt(document.getElementById("stepDb").value) || 1;
+  settings.minDb   = parseInt(document.getElementById("minDb").value) ?? -72;
+  settings.maxDb   = parseInt(document.getElementById("maxDb").value) ?? 18;
+  sendToPlugin({ event: "setSettings", payload: settings });
+
+  globalSettings.eclipseHost = document.getElementById("eclipseHost").value || "192.168.1.10";
+  globalSettings.eclipsePort = parseInt(document.getElementById("eclipsePort").value) || 52001;
+  sendToPlugin({ event: "setGlobalSettings", payload: globalSettings });
+}
+
+function updateStatus(state) {
+  const el = document.getElementById("hciStatus");
+  el.className = "status " + state;
+  el.textContent = state === "connected" ? "● 接続済み" :
+                   state === "connecting" ? "● 接続中..." : "● 未接続";
+}
+
+function sendToPlugin(msg) {
+  if (window.sendToPlugin) window.sendToPlugin(JSON.stringify(msg));
+}
+</script>
+</body>
+</html>

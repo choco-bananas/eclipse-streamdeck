@@ -1,0 +1,68 @@
+{
+    "Name": "Eclipse HCI",
+    "Version": "1.0.0",
+    "Author": "MTC Japan",
+    "Description": "Clear-Com Eclipse HX crosspoint and level control via HCI 2.0",
+    "Category": "Intercom",
+    "CategoryIcon": "imgs/category-icon",
+    "Icon": "imgs/plugin-icon",
+    "CodePath": "plugin.js",
+    "MinimumStreamDeckVersion": "6.4",
+    "SDKVersion": 2,
+    "OS": [
+        { "Platform": "windows", "MinimumVersion": "10" }
+    ],
+    "Nodejs": {
+        "Version": "20",
+        "Debug": "enabled"
+    },
+    "Software": {
+        "MinimumVersion": "6.4"
+    },
+    "Actions": [
+        {
+            "Name": "Crosspoint Toggle",
+            "UUID": "com.mtcjapan.eclipsehci.crosspoint",
+            "Icon": "imgs/action-xpt",
+            "Tooltip": "Toggle a crosspoint (audio route) between two ports",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/xpt-off",
+                    "Name": "Off",
+                    "Title": "XPT OFF",
+                    "TitleColor": "#ffffff",
+                    "TitleAlignment": "bottom",
+                    "FontSize": "10"
+                },
+                {
+                    "Image": "imgs/xpt-on",
+                    "Name": "On",
+                    "Title": "XPT ON",
+                    "TitleColor": "#ffffff",
+                    "TitleAlignment": "bottom",
+                    "FontSize": "10"
+                }
+            ],
+            "PropertyInspectorPath": "pi/crosspoint.html",
+            "SupportedInMultiActions": true
+        },
+        {
+            "Name": "Crosspoint Level",
+            "UUID": "com.mtcjapan.eclipsehci.level",
+            "Icon": "imgs/action-level",
+            "Tooltip": "Adjust crosspoint level with a dial encoder",
+            "Controllers": ["Encoder"],
+            "Encoder": {
+                "layout": "$B1",
+                "TriggerDescription": {
+                    "Rotate": "Adjust level (dB)",
+                    "Push": "Reset to 0 dB",
+                    "Touch": "Toggle mute (-72 dB)"
+                }
+            },
+            "PropertyInspectorPath": "pi/level.html",
+            "SupportedInMultiActions": false
+        }
+    ]
+}

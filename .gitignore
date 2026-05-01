@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.js.map
+*.d.ts
+.env
+.DS_Store
+Thumbs.db
+*.log
+bridge/dist/
+plugin/com.mtcjapan.eclipsehci.sdPlugin/plugin.js
+plugin/com.mtcjapan.eclipsehci.sdPlugin/plugin.js.map

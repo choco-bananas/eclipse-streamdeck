@@ -1,0 +1,20 @@
+{
+  "name": "eclipse-hci-bridge",
+  "version": "1.0.0",
+  "description": "Clear-Com Eclipse HCI WebSocket Bridge for Stream Deck",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.7.0",
+    "ts-node": "^10.9.2"
+  }
+}
